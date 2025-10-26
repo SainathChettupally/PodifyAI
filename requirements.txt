@@ -1,0 +1,9 @@
+transformers>=4.44
+torch
+sentencepiece
+PyMuPDF
+python-docx
+python-pptx
+beautifulsoup4
+lxml
+streamlit
