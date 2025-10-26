@@ -29,3 +29,9 @@ streamlit run ui/app.py
 - `notebooks/` setup notebook
 - `docs/` blueprint and visuals
 - `results/` outputs
+
+## Author
+Sainath Chettupally
+
+Email: s.chettupally@ufl.edu
+
