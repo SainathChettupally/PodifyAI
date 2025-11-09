@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Uploads and Results
+uploads/
+results/*.mp3
+results/*.csv
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Frontend (if not already in frontend/.gitignore)
+node_modules/
+build/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log

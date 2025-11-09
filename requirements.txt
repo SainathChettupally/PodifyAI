@@ -7,3 +7,11 @@ python-pptx
 beautifulsoup4
 lxml
 streamlit
+gTTS
+deep-translator
+Flask
+Flask-Cors
+datasets
+rouge-score
+nltk
+pyarrow
