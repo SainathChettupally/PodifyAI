@@ -112,5 +112,5 @@ The frontend will open in your browser, typically at `http://localhost:3000`.
 
 ## Author
 
-Sainath Chettupally
-Email: s.chettupally@ufl.edu
+* Sainath Chettupally
+* Email: s.chettupally@ufl.edu
