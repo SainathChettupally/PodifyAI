@@ -20,9 +20,14 @@ import {
   Paper,
   ToggleButton,
   ToggleButtonGroup,
-  styled
+  styled,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Chip,
+  Stack
 } from '@mui/material';
-import { CloudUpload as CloudUploadIcon, Audiotrack as AudiotrackIcon, InsertDriveFile } from '@mui/icons-material';
+import { CloudUpload as CloudUploadIcon, Audiotrack as AudiotrackIcon, InsertDriveFile, Speed, Psychology, RecordVoiceOver } from '@mui/icons-material';
 import logo from './Podify_logo_final.png';
 
 const Dropzone = styled('div')(({ theme, isDragActive }) => ({
@@ -40,8 +45,13 @@ function App() {
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState('standard');
   const [language, setLanguage] = useState('es');
+  const [modelType, setModelType] = useState('standard'); // 'standard' or 'gemini'
+  const [voice, setVoice] = useState('standard'); // 'standard' or Gemini voice names
+
   const [originalSummary, setOriginalSummary] = useState('');
   const [translatedSummary, setTranslatedSummary] = useState('');
+  const [metrics, setMetrics] = useState(null);
+
   const [audioUrl, setAudioUrl] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,11 +101,13 @@ function App() {
     formData.append('file', file);
     formData.append('mode', mode);
     formData.append('language', language);
+    formData.append('model_type', modelType);
 
     setIsLoading(true);
     setOriginalSummary('');
     setTranslatedSummary('');
     setAudioUrl('');
+    setMetrics(null);
 
     try {
       const response = await axios.post('http://localhost:5000/api/summarize', formData, {
@@ -105,6 +117,7 @@ function App() {
       });
       setOriginalSummary(response.data.originalSummary);
       setTranslatedSummary(response.data.translatedSummary);
+      setMetrics(response.data.metrics);
       setActiveTab(0);
     } catch (error) {
       console.error('Error generating summary:', error);
@@ -127,6 +140,7 @@ function App() {
       const response = await axios.post('http://localhost:5000/api/generate-audio', {
         translatedSummary,
         language,
+        voice
       });
       setAudioUrl(`http://localhost:5000${response.data.audioUrl}`);
     } catch (error) {
@@ -141,7 +155,7 @@ function App() {
     <>
       <AppBar position="static" elevation={0}>
         <Toolbar>
-          <img src={logo} alt="PodifyAI Logo" style={{ height: 200, width: 200,marginRight: 16 }} />
+          <img src={logo} alt="PodifyAI Logo" style={{ height: 200, width: 200, marginRight: 16 }} />
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h2" component="div" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
               PodifyAI
@@ -160,6 +174,7 @@ function App() {
                 <Typography variant="h5" gutterBottom>
                   Your Podium
                 </Typography>
+
                 <FormControl fullWidth margin="normal">
                   <input
                     accept="application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -180,14 +195,34 @@ function App() {
                       <Typography>Drag & drop a file here, or click to select a file</Typography>
                     </Dropzone>
                   </label>
-                  {fileName && <Typography variant="body2" sx={{ mt: 1 }}><InsertDriveFile fontSize='small' sx={{verticalAlign: 'middle', mr: 1}}/>{fileName}</Typography>}
+                  {fileName && <Typography variant="body2" sx={{ mt: 1 }}><InsertDriveFile fontSize='small' sx={{ verticalAlign: 'middle', mr: 1 }} />{fileName}</Typography>}
                 </FormControl>
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Model Selection */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Psychology sx={{ mr: 1 }} /> AI Model
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={modelType === 'gemini'}
+                        onChange={(e) => setModelType(e.target.checked ? 'gemini' : 'standard')}
+                        color="secondary"
+                      />
+                    }
+                    label={modelType === 'gemini' ? "Gemini (Advanced)" : "DistilBART (Standard)"}
+                  />
+                </Box>
+
                 <FormControl component="fieldset" margin="normal" fullWidth>
-                  <Typography component="legend" sx={{mb: 1}}>Summary Mode</Typography>
+                  <Typography component="legend" sx={{ mb: 1 }}>Summary Mode</Typography>
                   <ToggleButtonGroup
                     value={mode}
                     exclusive
-                    onChange={(e, newMode) => {if(newMode) setMode(newMode)}}
+                    onChange={(e, newMode) => { if (newMode) setMode(newMode) }}
                     aria-label="summary mode"
                     fullWidth
                   >
@@ -202,6 +237,7 @@ function App() {
                     </ToggleButton>
                   </ToggleButtonGroup>
                 </FormControl>
+
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="language-select-label">Target Language</InputLabel>
                   <Select
@@ -218,6 +254,7 @@ function App() {
                     <MenuItem value="hi">Hindi</MenuItem>
                   </Select>
                 </FormControl>
+
                 <Box sx={{ mt: 2, position: 'relative' }}>
                   <Button
                     fullWidth
@@ -250,47 +287,84 @@ function App() {
               <CardContent sx={{ position: 'relative', zIndex: 1 }}>
                 {originalSummary || translatedSummary ? (
                   <>
-                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                      <Tabs 
-                        value={activeTab} 
-                        onChange={(e, newValue) => setActiveTab(newValue)} 
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Tabs
+                        value={activeTab}
+                        onChange={(e, newValue) => setActiveTab(newValue)}
                         aria-label="summary tabs"
                         TabIndicatorProps={{
-                            style: {
-                                backgroundColor: '#4dd0e1'
-                            }
+                          style: {
+                            backgroundColor: '#4dd0e1'
+                          }
                         }}
-                        >
+                      >
                         <Tab label="Original Summary" />
                         <Tab label="Translated Summary" />
                       </Tabs>
+                      {metrics && (
+                        <Chip
+                          icon={<Speed />}
+                          label={`${metrics.totalTime}s`}
+                          variant="outlined"
+                          size="small"
+                          sx={{ mr: 2 }}
+                          title={`Extraction: ${metrics.extractionTime}s, Summarization: ${metrics.summarizationTime}s, Translation: ${metrics.translationTime}s`}
+                        />
+                      )}
                     </Box>
                     <Paper elevation={0} sx={{ p: 3, mt: 2, minHeight: 200, whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
                       {activeTab === 0 ? originalSummary : translatedSummary}
                     </Paper>
                     {activeTab === 1 && translatedSummary && (
-                      <Box sx={{ mt: 2, position: 'relative' }}>
-                        <Button
-                          variant="contained"
-                          startIcon={<AudiotrackIcon />}
-                          onClick={handleGenerateAudio}
-                          disabled={isGeneratingAudio}
-                        >
-                          {isGeneratingAudio ? 'Generating Audio...' : 'Generate Audio'}
-                        </Button>
-                        {isGeneratingAudio && (
-                          <CircularProgress
-                            size={24}
-                            sx={{
-                              color: 'primary.main',
-                              position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              marginTop: '-12px',
-                              marginLeft: '-12px',
-                            }}
-                          />
-                        )}
+                      <Box sx={{ mt: 2 }}>
+                        <Divider sx={{ mb: 2 }} />
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth size="small">
+                              <InputLabel id="voice-select-label">Voice</InputLabel>
+                              <Select
+                                labelId="voice-select-label"
+                                value={voice}
+                                label="Voice"
+                                onChange={(e) => setVoice(e.target.value)}
+                              >
+                                <MenuItem value="standard">Standard (Robotic)</MenuItem>
+                                <MenuItem value="Puck">Puck (Gemini - Male)</MenuItem>
+                                <MenuItem value="Charon">Charon (Gemini - Male)</MenuItem>
+                                <MenuItem value="Kore">Kore (Gemini - Female)</MenuItem>
+                                <MenuItem value="Fenrir">Fenrir (Gemini - Male)</MenuItem>
+                                <MenuItem value="Aoede">Aoede (Gemini - Female)</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <Box sx={{ position: 'relative' }}>
+                              <Button
+                                fullWidth
+                                variant="contained"
+                                startIcon={<AudiotrackIcon />}
+                                onClick={handleGenerateAudio}
+                                disabled={isGeneratingAudio}
+                              >
+                                {isGeneratingAudio ? 'Generating Audio...' : 'Generate Audio'}
+                              </Button>
+                              {isGeneratingAudio && (
+                                <CircularProgress
+                                  size={24}
+                                  sx={{
+                                    color: 'primary.main',
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    marginTop: '-12px',
+                                    marginLeft: '-12px',
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </Grid>
+                        </Grid>
+
                         {audioUrl && (
                           <audio controls src={audioUrl} style={{ width: '100%', marginTop: 16 }}>
                             Your browser does not support the audio element.

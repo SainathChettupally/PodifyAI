@@ -15,3 +15,5 @@ datasets
 rouge-score
 nltk
 pyarrow
+google-genai
+python-dotenv

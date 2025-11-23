@@ -3,6 +3,9 @@ __pycache__/
 *.pyc
 venv/
 
+# Environment Variables (CRITICAL - API Keys!)
+.env
+
 # Uploads and Results
 uploads/
 results/*.mp3
@@ -17,6 +20,10 @@ build/
 
 # macOS
 .DS_Store
+
+# Windows
+desktop.ini
+Thumbs.db
 
 # Logs
 *.log
